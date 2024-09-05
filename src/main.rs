@@ -18,7 +18,7 @@ fn main() -> Result<(), WifiConnectionError> {
             if result == true {
                 "Connection Successfull."
             } else {
-                "Invalid password."
+                "Invalid ssid or password."
             }
         ),
         Err(err) => println!("The following error occurred: {:?}", err),
