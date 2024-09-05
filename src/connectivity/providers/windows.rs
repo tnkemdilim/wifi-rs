@@ -28,6 +28,18 @@ impl WiFi {
 
         Ok(())
     }
+
+    /// Check if the status output contains the ssid.
+    fn check_connection(ssid: &str) -> bool {
+        let output = Command::new("netsh")
+            .args(&["wlan", "show", "interfaces"])
+            .output()
+            .unwrap();
+
+        String::from_utf8_lossy(&output.stdout)
+            .as_ref()
+            .contains(ssid)
+    }
 }
 
 /// Wireless network connectivity functionality.
@@ -40,16 +52,20 @@ impl Connectivity for WiFi {
             });
         }
 
+        // Check if the ssid is already connected.
+        if Self::check_connection(ssid) {
+            return Ok(true);
+        }
+
         Self::add_profile(ssid, password)?;
 
-        let output = Command::new("netsh")
+        Command::new("netsh")
             .args(&["wlan", "connect", &format!("name={}", ssid)])
-            .output()
+            .status()
             .map_err(|err| WifiConnectionError::FailedToConnect(format!("{}", err)))?;
 
-        if !String::from_utf8_lossy(&output.stdout)
-            .as_ref()
-            .contains("completed successfully")
+        // Check if the ssid is connected.
+        if !Self::check_connection(ssid)
         {
             return Ok(false);
         }
